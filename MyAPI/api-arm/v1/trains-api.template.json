@@ -1,0 +1,209 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "apimServiceName": {
+      "type": "string"
+    },
+    "policyXMLBaseUrl": {
+      "type": "string"
+    },
+    "policyXMLSasToken": {
+      "type": "string"
+    }
+  },
+  "resources": [
+    {
+      "apiVersion": "2021-08-01",
+      "type": "Microsoft.ApiManagement/service/apis",
+      "name": "[concat(parameters('apimServiceName'), '/trains')]",
+      "dependsOn": [],
+      "properties": {
+        "description": "",
+        "authenticationSettings": {
+          "subscriptionKeyRequired": false
+        },
+        "subscriptionKeyParameterNames": {
+          "header": "Ocp-Apim-Subscription-Key",
+          "query": "subscription-key"
+        },
+        "apiRevision": "1",
+        "apiVersion": "v1",
+        "apiVersionSetId": "[concat(resourceId('Microsoft.ApiManagement/service', parameters('apimServiceName')), '/apiVersionSets/642c1b2096e2f6ce79df6b95')]",
+        "subscriptionRequired": true,
+        "displayName": "Trains",
+        "path": "train",
+        "protocols": [
+          "https"
+        ]
+      }
+    },
+    {
+      "apiVersion": "2021-08-01",
+      "type": "Microsoft.ApiManagement/service/apis/schemas",
+      "name": "[concat(parameters('apimServiceName'), '/trains/1680612308182')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), 'trains')]"
+      ],
+      "properties": {
+        "contentType": "application/vnd.oai.openapi.components+json",
+        "document": {
+          "components": {
+            "schemas": {
+              "trainAnnouncements": {
+                "type": "object",
+                "properties": {
+                  "result": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "trainAnnouncement": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "advertisedTimeAtLocation": {
+                                "type": "string"
+                              },
+                              "advertisedTrainIdent": {
+                                "type": "string"
+                              },
+                              "toLocation": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "locationName": {
+                                      "type": "string"
+                                    },
+                                    "priority": {
+                                      "type": "integer"
+                                    },
+                                    "order": {
+                                      "type": "integer"
+                                    }
+                                  },
+                                  "required": [
+                                    "locationName",
+                                    "priority",
+                                    "order"
+                                  ]
+                                }
+                              },
+                              "trackAtLocation": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "advertisedTimeAtLocation",
+                              "advertisedTrainIdent",
+                              "toLocation",
+                              "trackAtLocation"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "trainAnnouncement"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2021-08-01",
+      "type": "Microsoft.ApiManagement/service/apis/operations",
+      "name": "[concat(parameters('apimServiceName'), '/trains/get-departure')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), 'trains')]",
+        "[resourceId('Microsoft.ApiManagement/service/apis/schemas', parameters('apimServiceName'), 'trains', '1680612308182')]"
+      ],
+      "properties": {
+        "displayName": "Get Departure",
+        "method": "GET",
+        "urlTemplate": "/departure/{stationId}",
+        "description": "",
+        "templateParameters": [
+          {
+            "name": "stationId",
+            "description": "The abbreviation of the station you want to get data about",
+            "type": "",
+            "required": true,
+            "values": [
+              "Cst",
+              "Vå"
+            ]
+          }
+        ],
+        "responses": [
+          {
+            "description": "",
+            "headers": [],
+            "representations": [
+              {
+                "contentType": "application/json",
+                "schemaId": "1680612308182",
+                "typeName": "trainAnnouncements",
+                "examples": {
+                  "default": {
+                    "value": {
+                      "result": [
+                        {
+                          "trainAnnouncement": [
+                            {
+                              "advertisedTimeAtLocation": "string",
+                              "advertisedTrainIdent": "string",
+                              "toLocation": [
+                                {
+                                  "locationName": "string",
+                                  "priority": 0,
+                                  "order": 0
+                                }
+                              ],
+                              "trackAtLocation": "string"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ],
+            "statusCode": 200
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2021-08-01",
+      "type": "Microsoft.ApiManagement/service/apis/operations/policies",
+      "name": "[concat(parameters('apimServiceName'), '/trains/get-departure/policy')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service/apis/operations', parameters('apimServiceName'), 'trains', 'get-departure')]"
+      ],
+      "properties": {
+        "value": "[concat(parameters('policyXMLBaseUrl'), 'trains-get-departure-operationPolicy.xml', parameters('policyXMLSasToken'))]",
+        "format": "rawxml-link"
+      }
+    },
+    {
+      "apiVersion": "2021-08-01",
+      "type": "Microsoft.ApiManagement/service/apis/policies",
+      "name": "[concat(parameters('apimServiceName'), '/trains/policy')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), 'trains')]"
+      ],
+      "properties": {
+        "value": "[concat(parameters('policyXMLBaseUrl'), 'trains-apiPolicy.xml', parameters('policyXMLSasToken'))]",
+        "format": "rawxml-link"
+      }
+    }
+  ]
+}

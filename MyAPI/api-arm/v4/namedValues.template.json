@@ -1,0 +1,65 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "apimServiceName": {
+      "type": "string"
+    },
+    "AudienceGUID": {
+      "type": "string"
+    },
+    "OauthIssuer": {
+      "type": "string"
+    },
+    "OAUTH-openid-configuration-Url": {
+      "type": "string"
+    }
+  },
+  "resources": [
+    {
+      "apiVersion": "2021-08-01",
+      "type": "Microsoft.ApiManagement/service/namedValues",
+      "name": "[concat(parameters('apimServiceName'), '/OAUTH-APIM-AudienceGUID')]",
+      "properties": {
+        "tags": [
+          "APIMnative",
+          "OAUTH",
+          "Security"
+        ],
+        "secret": true,
+        "displayName": "OAUTH-APIM-AudienceGUID",
+        "value": "[parameters('AudienceGUID')]"
+      }
+    },
+    {
+      "apiVersion": "2021-08-01",
+      "type": "Microsoft.ApiManagement/service/namedValues",
+      "name": "[concat(parameters('apimServiceName'), '/OAUTH-Issuer')]",
+      "properties": {
+        "tags": [
+          "APIMnative",
+          "OAUTH",
+          "Security"
+        ],
+        "secret": true,
+        "displayName": "OAUTH-Issuer",
+        "value":"[parameters('OauthIssuer')]"
+      }
+    },
+    {
+      "apiVersion": "2021-08-01",
+      "type": "Microsoft.ApiManagement/service/namedValues",
+      "name": "[concat(parameters('apimServiceName'), '/OAUTH-openid-configuration')]",
+      "properties": {
+        "tags": [
+          "APIMnative",
+          "OAUTH",
+          "Security"
+        ],
+        "secret": true,
+        "displayName": "OAUTH-openid-configuration",
+        "value" :"[parameters('OAUTH-openid-configuration-Url')]"
+      }
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+<policies>
+	<inbound>
+		<base />
+		<!-- this is only for internal use -->
+		<choose>
+			<when condition="@(context.Request.PrivateEndpointConnection == null)">
+				<return-response>
+					<set-status code="400" reason="Bad request" />
+					<set-body>This operation is for internal use only.</set-body>
+				</return-response>
+			</when>
+			<when condition="@(context.Request.PrivateEndpointConnection.Name == "demoendpoint")">
+				<rewrite-uri template="/Get-TrainAnnouncement/{stationId}" />
+			</when>
+			<otherwise>
+				<return-response>
+					<set-status code="400" reason="Bad request" />
+					<set-body>You are accessing this API from an unauthorized endpoint.</set-body>
+				</return-response>
+			</otherwise>
+		</choose>
+	</inbound>
+	<backend>
+		<base />
+	</backend>
+	<outbound>
+		<set-header name="PrivateEndpointName" exists-action="override">
+			<value>@(context.Request.PrivateEndpointConnection.Name)</value>
+		</set-header>
+		<base />
+	</outbound>
+	<on-error>
+		<base />
+	</on-error>
+</policies>

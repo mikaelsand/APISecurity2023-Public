@@ -1,0 +1,57 @@
+<policies>
+	<inbound>
+		<base />
+		<!-- this is only for internal use -->
+		<choose>
+			<when condition="@(context.Request.PrivateEndpointConnection == null)">
+				<return-response>
+					<set-status code="400" reason="Bad request" />
+					<set-body>This operation is for internal use only.</set-body>
+				</return-response>
+			</when>
+			<when condition="@(context.Request.PrivateEndpointConnection.Name == "demoendpoint")">
+				<!-- validate bearer token -->
+				<validate-jwt header-name="Authorization" failed-validation-httpcode="401" failed-validation-error-message="Token is invalid" require-expiration-time="true" require-scheme="Bearer" require-signed-tokens="true" clock-skew="60">
+					<openid-config url="{{OAUTH-Permobil-openid-configuration}}" />
+					<audiences>
+						<audience>{{OAUTH-APIM-AudienceGUID}}</audience>
+					</audiences>
+					<issuers>
+						<issuer>{{OAUTH-Permobil-Issuer}}</issuer>
+					</issuers>
+					<required-claims>
+						<claim name="roles" match="any">
+							<value>TrainInfo.Read</value>
+						</claim>
+					</required-claims>
+				</validate-jwt>
+				<!-- set backend service -->
+				<set-backend-service id="apim-generated-policy" backend-id="TrainAnnouncement-secure-function" />
+				<!-- update auth-header for backend service -->
+				<authentication-managed-identity resource="13bc6dd9-3b0e-4d45-8726-ff8158970bf8" output-token-variable-name="msi-access-token" ignore-error="false" />
+				<set-header name="Authorization" exists-action="override">
+					<value>@("Bearer " + (string)context.Variables["msi-access-token"])</value>
+				</set-header>
+				<rewrite-uri template="/Get-TrainAnnouncement/{stationId}" />
+			</when>
+			<otherwise>
+				<return-response>
+					<set-status code="400" reason="Bad request" />
+					<set-body>You are accessing this API from an unauthorized endpoint.</set-body>
+				</return-response>
+			</otherwise>
+		</choose>
+	</inbound>
+	<backend>
+		<base />
+	</backend>
+	<outbound>
+		<set-header name="PrivateEndpointName" exists-action="override">
+			<value>@(context.Request.PrivateEndpointConnection.Name)</value>
+		</set-header>
+		<base />
+	</outbound>
+	<on-error>
+		<base />
+	</on-error>
+</policies>

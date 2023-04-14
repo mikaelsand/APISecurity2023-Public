@@ -1,0 +1,48 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "apimServiceName": {
+      "type": "string"
+    },
+    "BackendFunctionResourceId": {
+      "type": "string",
+      "metadata": {
+        "description": "The resource ID of the function we are connecting to"
+      
+      },
+      "defaultValue": "https://management.azure.com/subscriptions/MySubscriptionId/resourceGroups/MyResourceGroupName/providers/Microsoft.Web/sites/MyFunctionName"
+    },
+    "BackendFunctionUrl": {
+      "type": "string",
+      "metadata": {
+        "description": "The URL of the function. Make sure it ends in /api"
+      },
+      "defaultValue": "https://myFunctionName.azurewebsites.net/api"
+    }
+  },
+  "resources": [
+    {
+      "apiVersion": "2021-08-01",
+      "type": "Microsoft.ApiManagement/service/backends",
+      "name": "[concat(parameters('apimServiceName'), '/TrainAnnouncement-function')]",
+      "properties": {
+        "resourceId": "[parameters('BackendFunctionResourceId')]",
+        "credentials": {
+          "query": {},
+          "header": {
+            "x-functions-key": [
+              "{{SYS00XFunctionCode}}"
+            ]
+          }
+        },
+        "tls": {
+          "validateCertificateChain": true,
+          "validateCertificateName": true
+        },
+        "url": "[parameters('BackendFunctionUrl')]",
+        "protocol": "http"
+      }
+    }
+  ]
+}
